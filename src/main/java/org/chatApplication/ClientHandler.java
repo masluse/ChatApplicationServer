@@ -28,7 +28,7 @@ public class ClientHandler implements Runnable {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("[*] Connection from " + clientSocket.getInetAddress() + " was lost.");
         } finally {
             server.removeClient(clientSocket);
         }

@@ -5,13 +5,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.Map;
 
 public class ClientHandler implements Runnable {
-    private Socket clientSocket;
-    private BufferedReader in;
+    private final Socket clientSocket;
+    private final ChatServer server;
     private PrintWriter out;
-    private ChatServer server;
 
     public ClientHandler(Socket socket, ChatServer server) {
         this.clientSocket = socket;
@@ -20,8 +19,7 @@ public class ClientHandler implements Runnable {
 
     @Override
     public void run() {
-        try {
-            in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
             String message;
@@ -29,26 +27,20 @@ public class ClientHandler implements Runnable {
                 broadcast(message);
             }
 
-            removeClient();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            server.removeClient(clientSocket);
         }
     }
 
-    private void broadcast(String message) {
-        ArrayList<Socket> clients = server.getClients();
-        for (Socket client : clients) {
-            try {
-                PrintWriter clientOut = new PrintWriter(client.getOutputStream(), true);
-                clientOut.println(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+    public void broadcast(String message) {
+        for (Map.Entry<Socket, ClientHandler> entry : server.getClients().entrySet()) {
+            entry.getValue().sendMessage(message);
         }
     }
 
-    private void removeClient() {
-        server.removeClient(clientSocket);
+    public void sendMessage(String message) {
+        out.println(message);
     }
 }
-

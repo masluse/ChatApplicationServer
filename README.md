@@ -1,59 +1,51 @@
 # ChatApplicationServer
 
-Dieses Projekt ist ein einfacher Chat-Server, der auf dem Java-Socket-Programmiermodell basiert. Es kann mehrere Clients gleichzeitig verwalten und Nachrichten zwischen ihnen austauschen.
+This project is a simple chat server built on the Java socket programming model. It can handle multiple clients at a time, distributing messages among them.
 
-## Vorraussetzungen
+## Prerequisites
 
 - Java 17
 - Maven
 - Docker (optional)
 
-## Bauen und Ausführen
+## Building and Running
 
-### Ohne Docker
+### Without Docker
 
-Bauen Sie das Projekt mit Maven:
+Build the project using Maven:
 
 ``` bash
 mvn clean package
 ```
 
-Führen Sie das erstellte JAR aus:
+Run the created JAR:
 
 ``` bash
 java -jar target/ChatApplicationServer-1.0-SNAPSHOT.jar
 ```
 
-### Mit Docker
+### With Docker
 
-Erstellen Sie ein Docker-Image:
+Create a Docker image:
 
 ``` bash
 docker build -t my-java-app .
 ```
 
-Führen Sie das Docker-Image aus:
+Run the Docker image:
 
 ``` bash
 docker run -p 8080:8080 my-java-app
 ```
 
-Die Anwendung läuft auf dem Port 8080.
+The application is running on port 8080.
 
-## Funktionalitäten
+## Functionality
 
-- Akzeptiert Verbindungen von mehreren Clients über Sockets.
-- Empfängt Nachrichten von Clients und verteilt sie an alle verbundenen Clients.
-- Entfernt Clients, wenn sie die Verbindung trennen.
+- Accepts connections from multiple clients via sockets.
+- Receives messages from clients and distributes them to all connected clients.
+- Removes clients when they disconnect.
 
-## Weiterentwicklung
+## License
 
-Es gibt viele Möglichkeiten, dieses Projekt zu erweitern. Einige Ideen könnten sein:
-
-- Implementierung von Chat-Räumen, sodass Nachrichten nur an bestimmte Gruppen von Clients gesendet werden.
-- Hinzufügen einer Authentifizierung, um private Nachrichten zu ermöglichen.
-- Verbesserung der Fehlerbehandlung und Stabilität des Servers.
-
-## Lizenz
-
-Dieses Projekt ist lizenzfrei. Sie können es für jedes Projekt verwenden, das Sie möchten, ob kommerziell oder nicht.
+This project is unlicensed. You can use it for any project you want, commercial or not.

@@ -29,13 +29,18 @@ public class ClientHandler implements Runnable {
 
             String username;
             String password;
-            do {
-                out.println("Enter your username and password in the format 'username:password'");
+            while (true) {
                 String credentials = in.readLine();
                 String[] parts = credentials.split(":");
                 username = parts[0];
                 password = parts[1];
-            } while (!authenticate(username, password));
+                if (authenticate(username, password)) {
+                    out.println("Authenticated");
+                    break;
+                } else {
+                    out.println("Authentication failed");
+                }
+            }
 
             String message;
             while ((message = in.readLine()) != null) {

@@ -27,12 +27,14 @@ public class ClientHandler implements Runnable {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
+            String username;
             String password;
             do {
-                out.println("Enter your username: ");
-                username = in.readLine();
-                out.println("Enter your password: ");
-                password = in.readLine();
+                out.println("Enter your username and password in the format 'username:password'");
+                String credentials = in.readLine();
+                String[] parts = credentials.split(":");
+                username = parts[0];
+                password = parts[1];
             } while (!authenticate(username, password));
 
             String message;
@@ -56,7 +58,6 @@ public class ClientHandler implements Runnable {
             return rs.next();
         }
     }
-
 
     private void storeMessage(String username, String message) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement("INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)")) {

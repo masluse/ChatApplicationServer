@@ -12,7 +12,7 @@ RUN mvn clean package
 FROM eclipse-temurin:17-jre-alpine
 
 # Copy the jar file built in the first stage
-COPY --from=builder /target/*.jar /app.jar
+COPY --from=builder /target/*.jar /app/
 
 # Run the application
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-jar","/app/ChatApplicationServer-1.0-SNAPSHOT.jar"]

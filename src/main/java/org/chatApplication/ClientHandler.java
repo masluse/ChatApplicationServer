@@ -39,7 +39,6 @@ public class ClientHandler implements Runnable {
         ArrayList<Socket> clients = server.getClients();
         for (Socket client : clients) {
             try {
-                if (client.equals(clientSocket)) break;
                 PrintWriter clientOut = new PrintWriter(client.getOutputStream(), true);
                 clientOut.println(message);
             } catch (IOException e) {

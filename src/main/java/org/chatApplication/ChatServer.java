@@ -50,7 +50,16 @@ public class ChatServer {
                 statement.execute();
             }
         }
+        
+        // Run a test query to check if data can be retrieved correctly
+        try (Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery("SELECT * FROM users")) {
+            while (rs.next()) {
+                System.out.println("User in database: " + rs.getString("username") + ", Password: " + rs.getString("password"));
+            }
+        }
     }
+
 
     public void removeClient(Socket clientSocket) {
         clients.remove(clientSocket);

@@ -7,12 +7,14 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Map;
 import java.sql.*;
+import java.time.Instant;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
     private final ChatServer server;
     private final Connection connection;
     private PrintWriter out;
+    private String username;
 
     public ClientHandler(Socket socket, ChatServer server, Connection connection) {
         this.clientSocket = socket;
@@ -25,7 +27,7 @@ public class ClientHandler implements Runnable {
         try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String username, password;
+            String password;
             do {
                 out.println("Enter your username: ");
                 username = in.readLine();
@@ -35,6 +37,7 @@ public class ClientHandler implements Runnable {
 
             String message;
             while ((message = in.readLine()) != null) {
+                storeMessage(username, message);
                 broadcast(username + ": " + message);
             }
 
@@ -51,6 +54,15 @@ public class ClientHandler implements Runnable {
             statement.setString(2, password);
             ResultSet rs = statement.executeQuery();
             return rs.next();
+        }
+    }
+
+    private void storeMessage(String username, String message) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)")) {
+            statement.setString(1, username);
+            statement.setString(2, message);
+            statement.setTimestamp(3, Timestamp.from(Instant.now()));
+            statement.execute();
         }
     }
 

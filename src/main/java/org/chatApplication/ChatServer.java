@@ -37,6 +37,7 @@ public class ChatServer {
         // Create users table if it doesn't exist
         try (Statement statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255))");
+            statement.execute("CREATE TABLE IF NOT EXISTS messages (username VARCHAR(255), message TEXT, timestamp TIMESTAMP)");
         }
 
         // Insert users from USERS environment variable

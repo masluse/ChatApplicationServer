@@ -74,10 +74,13 @@ public class ClientHandler implements Runnable {
     }
 
     public void broadcast(String message) {
-        for (Map.Entry<Socket, ClientHandler> entry : server.getClients().entrySet()) {
-            entry.getValue().sendMessage(message);
+        for (Socket socket : server.getClients()) {
+            // Hier müssen Sie die entsprechende Logik hinzufügen, um die zugehörige ClientHandler Instanz zu finden
+            ClientHandler client = findClientHandlerBySocket(socket);
+            client.sendMessage(message);
         }
     }
+
 
     public void sendMessage(String message) {
         out.println(message);

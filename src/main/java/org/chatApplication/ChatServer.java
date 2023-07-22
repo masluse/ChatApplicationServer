@@ -11,6 +11,7 @@ import java.util.Map;
 public class ChatServer {
     private static final Map<String, String> userDatabase = new HashMap<>();
     private static final List<Handler> handlers = new ArrayList<>();
+    private static final List<Socket> clients = new ArrayList<>();
 
     static {
         // Populate user database
@@ -19,15 +20,25 @@ public class ChatServer {
         // Add more users as necessary
     }
 
-    public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(5000)) {
-            System.out.println("\u001B[32m[*] Server started on port 5000\u001B[0m");
+    public static void start(int port) throws IOException {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("\u001B[32m[*] Server started on port " + port + "\u001B[0m");
             while (true) {
-                new Handler(serverSocket.accept()).start();
+                Socket clientSocket = serverSocket.accept();
+                clients.add(clientSocket);
+                new Handler(clientSocket).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static List<Socket> getClients() {
+        return clients;
+    }
+
+    public static void removeClient(Socket client) {
+        clients.remove(client);
     }
 
     private static class Handler extends Thread {
@@ -89,6 +100,7 @@ public class ChatServer {
                 synchronized (handlers) {
                     handlers.remove(this);
                 }
+                removeClient(socket); // call to remove client from the client list
             }
         }
     }

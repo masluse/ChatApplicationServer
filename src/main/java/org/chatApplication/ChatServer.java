@@ -1,107 +1,76 @@
 package org.chatApplication;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.sql.*;
 
 public class ChatServer {
-    private static final Map<String, String> userDatabase = new HashMap<>();
-    private static final List<Handler> handlers = new ArrayList<>();
-    private static final List<Socket> clients = new ArrayList<>();
+    private final ConcurrentHashMap<Socket, ClientHandler> clients = new ConcurrentHashMap<>();
+    private static final String DB_URL = System.getenv("DB_URL");
+    private static final String DB_USER = System.getenv("DB_USER");
+    private static final String DB_PASSWORD = System.getenv("DB_PASSWORD");
 
-    static {
-        // Populate user database
-        userDatabase.put("user1", "password1");
-        userDatabase.put("user2", "password2");
-        // Add more users as necessary
-    }
+    public void start(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port);
+             Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+            System.out.println("[*] Server listening on IP address: " + serverSocket.getInetAddress().getHostAddress() + ", port: " + port);
 
-    public static void start(int port) throws IOException {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("\u001B[32m[*] Server started on port " + port + "\u001B[0m");
+            // Initialize database
+            initializeDatabase(connection);
+
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                clients.add(clientSocket);
-                new Handler(clientSocket).start();
+                System.out.println("[*] Accepted connection from " + clientSocket.getInetAddress());
+                
+                ClientHandler clientHandler = new ClientHandler(clientSocket, this, connection);
+                clients.put(clientSocket, clientHandler);
+                new Thread(clientHandler).start();
             }
+        } catch (SQLException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initializeDatabase(Connection connection) throws SQLException {
+        // Create users table if it doesn't exist
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("CREATE TABLE IF NOT EXISTS users (username VARCHAR(255), password VARCHAR(255))");
+            statement.execute("CREATE TABLE IF NOT EXISTS messages (username VARCHAR(255), message TEXT, timestamp TIMESTAMP)");
+        }
+
+        // Insert users from USERS environment variable
+        String users = System.getenv("USERS");
+        for (String user : users.split(";")) {
+            String[] parts = user.split(",");
+            try (PreparedStatement statement = connection.prepareStatement("INSERT INTO users (username, password) VALUES (?, ?)")) {
+                statement.setString(1, parts[0]);
+                statement.setString(2, parts[1]);
+                statement.execute();
+            }
+        }
+        
+        // Run a test query to check if data can be retrieved correctly
+        try (Statement statement = connection.createStatement();
+            ResultSet rs = statement.executeQuery("SELECT * FROM users")) {
+            while (rs.next()) {
+                System.out.println("User in database: " + rs.getString("username") + ", Password: " + rs.getString("password"));
+            }
+        }
+    }
+
+
+    public void removeClient(Socket clientSocket) {
+        clients.remove(clientSocket);
+        try {
+            clientSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static List<Socket> getClients() {
+    public ConcurrentHashMap<Socket, ClientHandler> getClients() {
         return clients;
-    }
-
-    public static void removeClient(Socket client) {
-        clients.remove(client);
-    }
-
-    private static class Handler extends Thread {
-        private String name;
-        private final Socket socket;
-        private BufferedReader in;
-        private PrintWriter out;
-
-        public Handler(Socket socket) {
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
-
-                // Handle authentication
-                while (true) {
-                    String input = in.readLine();
-                    if (input == null) {
-                        return;
-                    }
-                    String[] credentials = input.split(":");
-                    if (credentials.length == 2 && userDatabase.containsKey(credentials[0]) && userDatabase.get(credentials[0]).equals(credentials[1])) {
-                        name = credentials[0];
-                        out.println("Authenticated");
-                        break;
-                    } else {
-                        out.println("Authentication failed");
-                    }
-                }
-
-                synchronized (handlers) {
-                    handlers.add(this);
-                }
-
-                while (true) {
-                    String input = in.readLine();
-                    if (input == null) {
-                        return;
-                    }
-                    for (Handler handler : handlers) {
-                        handler.out.println(name + ": " + input);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (name != null) {
-                    System.out.println(name + " is leaving");
-                }
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                synchronized (handlers) {
-                    handlers.remove(this);
-                }
-                removeClient(socket); // call to remove client from the client list
-            }
-        }
     }
 }

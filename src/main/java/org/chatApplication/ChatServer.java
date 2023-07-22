@@ -1,6 +1,7 @@
 package org.chatApplication;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,9 +14,10 @@ public class ChatServer {
     private static final String DB_PASSWORD = System.getenv("DB_PASSWORD");
 
     public void start(int port) {
-        try (ServerSocket serverSocket = new ServerSocket(port);
-             Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            System.out.println("[*] Server listening on IP address: " + serverSocket.getInetAddress().getHostAddress() + ", port: " + port);
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+
+            Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            System.out.println("[*] Server listening on IP address: " + InetAddress.getLocalHost().getHostAddress() + ", port: " + port);
 
             // Initialize database
             initializeDatabase(connection);
